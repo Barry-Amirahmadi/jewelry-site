@@ -36,6 +36,10 @@ The dev server runs under `/jewelry-site/` just like production. That is
 deliberate: a path bug that only appears behind a base path shows up on the first
 local load instead of after a deploy.
 
+One consequence: `http://localhost:4321/` itself returns 404, so open the path
+with the base. (Dev is lenient and will also serve `/collections/` without the
+base; production will not, which is the whole reason links go through `href()`.)
+
 ## Layout
 
 ```
