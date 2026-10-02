@@ -1,0 +1,138 @@
+---
+import { site, type Lang } from '../data/site';
+import { t } from '../i18n/ui';
+import { href } from '../lib/i18n';
+import Icon from './Icon.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+const year = new Date().getFullYear();
+
+const explore = [
+  { to: '/collections', label: d.nav.collections },
+  { to: '/about', label: d.nav.about },
+  { to: '/journal', label: d.nav.journal },
+];
+
+const help = [
+  { to: '/care', label: d.nav.care },
+  { to: '/faq', label: d.nav.faq },
+  { to: '/contact', label: d.nav.contact },
+  { to: '/privacy', label: d.footer.privacy },
+  { to: '/terms', label: d.footer.terms },
+];
+---
+
+<footer class="border-hairline mt-auto border-t">
+  <div class="shell section-tight">
+    <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <p class="display text-ink text-2xl" style={lang === 'fa' ? '' : 'letter-spacing:0.14em'}>
+          {site.brand[lang]}
+        </p>
+        <p class="text-muted-fg mt-2 text-sm">{site.brandLine[lang]}</p>
+        <p class="text-muted-fg mt-6 max-w-xs text-sm leading-relaxed">{d.footer.demoNote}</p>
+      </div>
+
+      <nav aria-labelledby="ft-explore">
+        <h2 id="ft-explore" class="t-eyebrow">{d.footer.exploreHeading}</h2>
+        <ul class="mt-5 space-y-1">
+          {
+            explore.map((item) => (
+              <li>
+                <a
+                  href={href(item.to, lang)}
+                  class="text-ink link-underline inline-flex min-h-11 items-center text-sm"
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <nav aria-labelledby="ft-help">
+        <h2 id="ft-help" class="t-eyebrow">{d.footer.helpHeading}</h2>
+        <ul class="mt-5 space-y-1">
+          {
+            help.map((item) => (
+              <li>
+                <a
+                  href={href(item.to, lang)}
+                  class="text-ink link-underline inline-flex min-h-11 items-center text-sm"
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div>
+        <h2 class="t-eyebrow">{d.footer.visitHeading}</h2>
+        <address class="mt-5 space-y-4 not-italic">
+          <p class="text-muted-fg flex gap-3 text-sm leading-relaxed">
+            <Icon name="pin" size={18} class="text-gold mt-0.5 shrink-0" />
+            <span>{site.address[lang]}</span>
+          </p>
+          <p class="text-muted-fg flex gap-3 text-sm">
+            <Icon name="clock" size={18} class="text-gold mt-0.5 shrink-0" />
+            <span>{site.hours[lang]}</span>
+          </p>
+          <p class="flex gap-3 text-sm">
+            <Icon name="phone" size={18} class="text-gold mt-0.5 shrink-0" />
+            <a
+              href={`tel:${site.phoneHref}`}
+              class="text-ink link-underline"
+              dir="ltr"
+              aria-label={`${d.common.phone}: ${site.phoneDisplay.en}`}
+            >
+              {site.phoneDisplay[lang]}
+            </a>
+          </p>
+          <p class="flex gap-3 text-sm">
+            <Icon name="mail" size={18} class="text-gold mt-0.5 shrink-0" />
+            <a href={`mailto:${site.email}`} class="text-ink link-underline" dir="ltr">
+              {site.email}
+            </a>
+          </p>
+        </address>
+
+        <h2 class="t-eyebrow mt-8">{d.footer.followHeading}</h2>
+        <ul class="mt-4 flex gap-2">
+          <li>
+            <a
+              href={site.instagram}
+              rel="noopener noreferrer"
+              target="_blank"
+              class="border-field text-ink hover:border-ink flex size-11 items-center justify-center border transition-colors duration-200"
+              aria-label={d.footer.instagram}
+            >
+              <Icon name="instagram" size={18} />
+            </a>
+          </li>
+          <li>
+            <a
+              href={site.whatsapp}
+              rel="noopener noreferrer"
+              target="_blank"
+              class="border-field text-ink hover:border-ink flex size-11 items-center justify-center border transition-colors duration-200"
+              aria-label={d.footer.whatsapp}
+            >
+              <Icon name="whatsapp" size={18} />
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="hairline mt-14" />
+    <p class="text-muted-fg mt-6 text-xs">{d.footer.rights(year)}</p>
+  </div>
+</footer>

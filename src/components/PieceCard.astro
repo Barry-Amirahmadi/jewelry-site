@@ -1,0 +1,52 @@
+---
+import type { Product } from '../data/catalog';
+import type { Lang } from '../data/site';
+import { t, num } from '../i18n/ui';
+import { href } from '../lib/i18n';
+import Frame from './Frame.astro';
+
+interface Props {
+  product: Product;
+  lang: Lang;
+}
+
+const { product, lang } = Astro.props;
+const d = t(lang);
+
+/* One link wraps the whole card, so the card has exactly one accessible name
+   and one tab stop rather than three competing ones. */
+---
+
+<a
+  href={href(`/products/${product.slug}`, lang)}
+  class="piece group"
+  data-reveal
+  aria-label={`${product.name[lang]} — ${product.material[lang]}`}
+>
+  <!-- alt="" on purpose: the link above already carries the piece's name. -->
+  <Frame
+    slug={product.slug}
+    alt=""
+    motif={product.motif}
+    tone={product.tone}
+    sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 92vw"
+  />
+
+  <div class="mt-5">
+    <h3 class="t-h3 text-ink">{product.name[lang]}</h3>
+    <p class="text-muted-fg mt-1.5 text-sm">{product.material[lang]}</p>
+    <p class="text-muted-fg mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+      <span>{d.product.karat} {num(product.karat, lang)}</span>
+      <span aria-hidden="true" class="text-hairline">—</span>
+      <span>
+        {num(product.weightGrams, lang)}
+        {d.product.weightUnit}
+      </span>
+    </p>
+    <p
+      class="text-gold group-hover:decoration-gold mt-4 text-xs underline decoration-transparent decoration-1 underline-offset-4 transition-colors duration-200"
+    >
+      {d.common.priceOnRequest}
+    </p>
+  </div>
+</a>

@@ -1,0 +1,109 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Icon from '../components/Icon.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import { site, type Lang } from '../data/site';
+import { t } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+const c = d.contact;
+
+const rows = [
+  { icon: 'pin' as const, label: d.common.address, value: site.address[lang] },
+  { icon: 'clock' as const, label: d.common.hours, value: site.hours[lang] },
+];
+---
+
+<BaseLayout lang={lang} path="/contact" title={c.title} description={c.lead}>
+  <PageHeader eyebrow={c.eyebrow} title={c.title} lead={c.lead} />
+
+  <section class="section">
+    <div class="shell grid gap-14 lg:grid-cols-12 lg:gap-16">
+      <!-- Gallery details -->
+      <div class="lg:col-span-4">
+        <h2 class="t-h2 text-ink" data-reveal>{c.showroomHeading}</h2>
+
+        <dl class="mt-8 space-y-7" data-reveal>
+          {
+            rows.map((row) => (
+              <div>
+                <dt class="t-eyebrow flex items-center gap-2">
+                  <Icon name={row.icon} size={16} class="text-gold" />
+                  {row.label}
+                </dt>
+                <dd class="text-ink mt-2 leading-relaxed">{row.value}</dd>
+              </div>
+            ))
+          }
+
+          <div>
+            <dt class="t-eyebrow flex items-center gap-2">
+              <Icon name="phone" size={16} class="text-gold" />
+              {d.common.phone}
+            </dt>
+            <dd class="mt-2">
+              <a href={`tel:${site.phoneHref}`} class="text-ink link-underline" dir="ltr">
+                {site.phoneDisplay[lang]}
+              </a>
+            </dd>
+          </div>
+
+          <div>
+            <dt class="t-eyebrow flex items-center gap-2">
+              <Icon name="mail" size={16} class="text-gold" />
+              {d.common.email}
+            </dt>
+            <dd class="mt-2">
+              <a href={`mailto:${site.email}`} class="text-ink link-underline" dir="ltr">
+                {site.email}
+              </a>
+            </dd>
+          </div>
+        </dl>
+
+        <p class="border-gold text-muted-fg mt-9 border-s-2 ps-5 text-sm leading-relaxed" data-reveal>
+          {c.mapNote}
+        </p>
+
+        <ul class="mt-8 flex gap-2" data-reveal>
+          <li>
+            <a
+              href={site.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="border-field text-ink hover:border-ink flex size-11 items-center justify-center border transition-colors duration-200"
+              aria-label={d.footer.instagram}
+            >
+              <Icon name="instagram" size={18} />
+            </a>
+          </li>
+          <li>
+            <a
+              href={site.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="border-field text-ink hover:border-ink flex size-11 items-center justify-center border transition-colors duration-200"
+              aria-label={d.footer.whatsapp}
+            >
+              <Icon name="whatsapp" size={18} />
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Form -->
+      <div class="lg:col-span-8">
+        <h2 class="t-h2 text-ink" data-reveal>{c.formHeading}</h2>
+        <div class="mt-8" data-reveal>
+          <EnquiryForm lang={lang} id="contact-form" />
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

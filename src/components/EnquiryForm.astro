@@ -1,0 +1,274 @@
+---
+import { products } from '../data/catalog';
+import type { Lang } from '../data/site';
+import { t } from '../i18n/ui';
+import Icon from './Icon.astro';
+
+interface Props {
+  lang: Lang;
+  /** Preselect a piece when the form sits on a product page. */
+  piece?: string;
+  /** Distinguishes multiple forms on one page. */
+  id?: string;
+}
+
+const { lang, piece, id = 'enquiry' } = Astro.props;
+const d = t(lang);
+const f = d.form;
+
+const fid = (name: string) => `${id}-${name}`;
+---
+
+<form
+  class="not-prose"
+  id={id}
+  novalidate
+  data-enquiry
+  data-msg-name={f.errName}
+  data-msg-phone={f.errPhone}
+  data-msg-email={f.errEmail}
+  data-msg-message={f.errMessage}
+>
+  <!--
+    Error summary. Per the Forms/Accessibility rule: top of the form,
+    role=alert, focusable, links to each invalid field, and inline errors
+    stay in place rather than being replaced by it.
+  -->
+  <div
+    id={fid('summary')}
+    class="border-danger hidden border-s-2 bg-white p-4"
+    role="alert"
+    tabindex="-1"
+    aria-labelledby={fid('summary-title')}
+    data-summary
+  >
+    <h3 id={fid('summary-title')} class="text-danger flex items-center gap-2 text-sm font-medium">
+      <Icon name="alert" size={18} />
+      {f.errorSummaryTitle}
+    </h3>
+    <ul class="mt-3 space-y-1.5 ps-6 text-sm" data-summary-list></ul>
+  </div>
+
+  <div class="mt-0 grid gap-6 sm:grid-cols-2" data-fields>
+    <div class="sm:col-span-1">
+      <label class="label" for={fid('name')}>
+        {f.name}
+        <span class="text-muted-fg font-normal">({f.required})</span>
+      </label>
+      <input
+        class="field"
+        type="text"
+        id={fid('name')}
+        name="name"
+        autocomplete="name"
+        required
+        aria-describedby={fid('name-error')}
+      />
+      <p class="err hidden" id={fid('name-error')} data-error-for="name"></p>
+    </div>
+
+    <div class="sm:col-span-1">
+      <label class="label" for={fid('phone')}>
+        {f.phone}
+        <span class="text-muted-fg font-normal">({f.required})</span>
+      </label>
+      <input
+        class="field"
+        type="tel"
+        id={fid('phone')}
+        name="phone"
+        inputmode="tel"
+        autocomplete="tel"
+        dir="ltr"
+        required
+        aria-describedby={`${fid('phone-hint')} ${fid('phone-error')}`}
+      />
+      <p class="hint" id={fid('phone-hint')}>{f.phoneHint}</p>
+      <p class="err hidden" id={fid('phone-error')} data-error-for="phone"></p>
+    </div>
+
+    <div class="sm:col-span-1">
+      <label class="label" for={fid('email')}>
+        {f.email}
+        <span class="text-muted-fg font-normal">({f.emailOptional})</span>
+      </label>
+      <input
+        class="field"
+        type="email"
+        id={fid('email')}
+        name="email"
+        autocomplete="email"
+        dir="ltr"
+        aria-describedby={fid('email-error')}
+      />
+      <p class="err hidden" id={fid('email-error')} data-error-for="email"></p>
+    </div>
+
+    <div class="sm:col-span-1">
+      <label class="label" for={fid('subject')}>{f.subject}</label>
+      <select class="field" id={fid('subject')} name="subject">
+        {f.subjectOptions.map((option) => <option value={option}>{option}</option>)}
+      </select>
+    </div>
+
+    <div class="sm:col-span-2">
+      <label class="label" for={fid('piece')}>{f.piece}</label>
+      <select class="field" id={fid('piece')} name="piece">
+        <option value="">{f.pieceAny}</option>
+        {
+          products.map((product) => (
+            <option value={product.ref} selected={piece === product.slug}>
+              {product.name[lang]} — {product.ref}
+            </option>
+          ))
+        }
+      </select>
+    </div>
+
+    <div class="sm:col-span-2">
+      <label class="label" for={fid('message')}>
+        {f.message}
+        <span class="text-muted-fg font-normal">({f.required})</span>
+      </label>
+      <textarea
+        class="field"
+        id={fid('message')}
+        name="message"
+        rows="5"
+        required
+        aria-describedby={`${fid('message-hint')} ${fid('message-error')}`}></textarea>
+      <p class="hint" id={fid('message-hint')}>{f.messageHint}</p>
+      <p class="err hidden" id={fid('message-error')} data-error-for="message"></p>
+    </div>
+  </div>
+
+  <div class="mt-8 flex flex-wrap items-center gap-4">
+    <button type="submit" class="btn btn-primary">{f.submit}</button>
+    <p class="text-muted-fg text-xs">{f.privacyNote}</p>
+  </div>
+
+  <!-- Success panel. Also role=status so it is announced without stealing focus. -->
+  <div
+    class="border-gold mt-6 hidden border-s-2 bg-white p-4"
+    role="status"
+    aria-live="polite"
+    data-success
+  >
+    <p class="text-ink flex items-center gap-2 text-sm font-medium">
+      <Icon name="check" size={18} class="text-gold" />
+      {f.success}
+    </p>
+    <p class="text-muted-fg mt-2 text-xs">{f.successNote}</p>
+  </div>
+</form>
+
+<script>
+  function setupEnquiryForms() {
+    document.querySelectorAll<HTMLFormElement>('form[data-enquiry]').forEach((form) => {
+      if (form.dataset.bound === 'true') return;
+      form.dataset.bound = 'true';
+
+      // Messages travel on the form itself, so they survive a view transition
+      // and stay correct when two locales are cached side by side.
+      const messages = {
+        name: form.dataset.msgName ?? '',
+        phone: form.dataset.msgPhone ?? '',
+        email: form.dataset.msgEmail ?? '',
+        message: form.dataset.msgMessage ?? '',
+      };
+
+      const summary = form.querySelector<HTMLElement>('[data-summary]');
+      const summaryList = form.querySelector<HTMLElement>('[data-summary-list]');
+      const success = form.querySelector<HTMLElement>('[data-success]');
+      const touched = new Set<string>();
+
+      const validate = (name: string): string | null => {
+        const field = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
+        if (!field) return null;
+        const value = field.value.trim();
+
+        if (name === 'name') return value.length < 2 ? messages.name : null;
+        // Accepts Persian and Western digits, spaces, dashes and a leading +
+        if (name === 'phone') {
+          const digits = value.replace(/[^\d۰-۹]/g, '');
+          return digits.length < 8 ? messages.phone : null;
+        }
+        if (name === 'email') {
+          if (!value) return null; // optional
+          return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value) ? null : messages.email;
+        }
+        if (name === 'message') return value.length < 10 ? messages.message : null;
+        return null;
+      };
+
+      const paint = (name: string, error: string | null) => {
+        const field = form.elements.namedItem(name) as HTMLElement | null;
+        const slot = form.querySelector<HTMLElement>(`[data-error-for="${name}"]`);
+        if (!field || !slot) return;
+        if (error) {
+          field.setAttribute('aria-invalid', 'true');
+          slot.textContent = error;
+          slot.classList.remove('hidden');
+        } else {
+          field.removeAttribute('aria-invalid');
+          slot.textContent = '';
+          slot.classList.add('hidden');
+        }
+      };
+
+      // Re-validate only after a field has been submitted once — never move
+      // focus or show an error on first blur.
+      form.addEventListener('input', (event) => {
+        const target = event.target as HTMLElement;
+        const name = target.getAttribute('name');
+        if (name && touched.has(name)) paint(name, validate(name));
+      });
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const names = ['name', 'phone', 'email', 'message'];
+        const errors: Array<{ name: string; message: string }> = [];
+
+        names.forEach((name) => {
+          touched.add(name);
+          const error = validate(name);
+          paint(name, error);
+          if (error) errors.push({ name, message: error });
+        });
+
+        success?.classList.add('hidden');
+
+        if (errors.length === 0) {
+          summary?.classList.add('hidden');
+          form.querySelector<HTMLElement>('[data-fields]')?.classList.add('hidden');
+          form.querySelector<HTMLElement>('button[type="submit"]')?.classList.add('hidden');
+          success?.classList.remove('hidden');
+          return;
+        }
+
+        if (summary && summaryList) {
+          summaryList.innerHTML = '';
+          errors.forEach(({ name, message }) => {
+            const field = form.elements.namedItem(name) as HTMLElement | null;
+            const item = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = `#${field?.id ?? ''}`;
+            link.textContent = message;
+            link.className = 'text-danger underline decoration-1 underline-offset-4';
+            link.addEventListener('click', (clickEvent) => {
+              clickEvent.preventDefault();
+              field?.focus();
+            });
+            item.appendChild(link);
+            summaryList.appendChild(item);
+          });
+          summary.classList.remove('hidden');
+          summary.focus();
+        }
+      });
+    });
+  }
+
+  setupEnquiryForms();
+  document.addEventListener('astro:page-load', setupEnquiryForms);
+</script>

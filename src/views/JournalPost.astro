@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Frame from '../components/Frame.astro';
+import { posts, type Post } from '../data/catalog';
+import { postAlt } from '../data/alt';
+import type { Lang } from '../data/site';
+import { t } from '../i18n/ui';
+import { href, formatDate } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+  post: Post;
+}
+
+const { lang, post } = Astro.props;
+const d = t(lang);
+const j = d.journal;
+const others = posts.filter((item) => item.slug !== post.slug);
+---
+
+<BaseLayout
+  lang={lang}
+  path={`/journal/${post.slug}`}
+  title={post.title[lang]}
+  description={post.excerpt[lang]}
+  share={post.slug}
+>
+  <article>
+    <header class="border-hairline border-b">
+      <div class="shell max-w-3xl pt-10 pb-14">
+        <a
+          href={href('/journal', lang)}
+          class="text-muted-fg hover:text-ink inline-flex min-h-11 items-center gap-2 text-xs transition-colors duration-200"
+        >
+          <Icon name="arrow-right" size={14} class="rotate-180 rtl:rotate-0" />
+          {j.backToJournal}
+        </a>
+
+        <p class="text-muted-fg mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" data-reveal>
+          <time datetime={post.date}>{formatDate(post.date, lang)}</time>
+          <span aria-hidden="true" class="text-hairline">—</span>
+          <span>{j.readingTime(post.minutes)}</span>
+        </p>
+        <h1 class="t-h1 text-ink mt-4" data-reveal>{post.title[lang]}</h1>
+        <p class="t-lead text-muted-fg mt-6" data-reveal>{post.excerpt[lang]}</p>
+      </div>
+    </header>
+
+    <div class="shell max-w-3xl pt-12">
+      <Frame
+        slug={post.slug}
+        alt={postAlt(post, lang)}
+        ratio="3 / 2"
+        loading="eager"
+        widths={[640, 960, 1280, 1536]}
+        sizes="(min-width: 768px) 768px, 94vw"
+      />
+    </div>
+
+    <div class="shell max-w-3xl py-16 md:py-20">
+      {
+        post.body[lang].map((paragraph) => (
+          <p class="text-ink mb-7 leading-loose last:mb-0" data-reveal>
+            {paragraph}
+          </p>
+        ))
+      }
+    </div>
+
+    {
+      others.length > 0 && (
+        <section class="section-tight border-hairline border-t" aria-labelledby="more">
+          <div class="shell max-w-3xl">
+            <h2 id="more" class="t-eyebrow" data-reveal>{j.more}</h2>
+            <ul class="mt-6" data-stagger>
+              {others.map((item) => (
+                <li class="border-hairline border-b last:border-0" data-reveal>
+                  <a href={href(`/journal/${item.slug}`, lang)} class="group block py-5">
+                    <h3 class="display text-ink group-hover:text-gold text-xl transition-colors duration-200">
+                      {item.title[lang]}
+                    </h3>
+                    <p class="text-muted-fg mt-1.5 text-sm">{item.excerpt[lang]}</p>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>

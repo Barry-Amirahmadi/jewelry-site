@@ -1,0 +1,13 @@
+# Build output — GitHub Actions rebuilds it on every push, so it is never committed.
+dist/
+.astro/
+
+node_modules/
+*.tsbuildinfo
+
+.env*
+!.env.example
+
+.DS_Store
+Thumbs.db
+*.log

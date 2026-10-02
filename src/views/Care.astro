@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Icon from '../components/Icon.astro';
+import type { Lang } from '../data/site';
+import { t, num } from '../i18n/ui';
+import { href } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+const c = d.care;
+---
+
+<BaseLayout lang={lang} path="/care" title={c.title} description={c.lead}>
+  <PageHeader eyebrow={c.eyebrow} title={c.title} lead={c.lead} />
+
+  <section class="section">
+    <div class="shell">
+      <ol class="grid max-w-4xl gap-x-12 gap-y-12 md:grid-cols-2" data-stagger>
+        {
+          c.items.map((item, index) => (
+            <li class="border-hairline border-t pt-6" data-reveal>
+              <p class="text-gold text-xs">{num(index + 1, lang)}</p>
+              <h2 class="display text-ink mt-3 text-xl md:text-2xl">{item.title}</h2>
+              <p class="text-muted-fg mt-3 leading-relaxed">{item.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="border-gold mt-16 max-w-2xl border-s-2 ps-6" data-reveal>
+        <h2 class="display text-ink text-xl md:text-2xl">{d.home.visitHeading}</h2>
+        <p class="text-muted-fg mt-3 leading-relaxed">{d.home.visitBody}</p>
+        <a class="btn btn-quiet mt-5" href={href('/contact', lang)}>
+          {d.home.visitCta}
+          <Icon name="arrow-right" size={16} class="rtl:rotate-180" />
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

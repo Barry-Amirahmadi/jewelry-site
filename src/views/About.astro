@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Frame from '../components/Frame.astro';
+import Icon from '../components/Icon.astro';
+import type { Lang } from '../data/site';
+import { editorialAlt } from '../data/alt';
+import { ratioFor } from '../data/grounds';
+import { t, num } from '../i18n/ui';
+import { href } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+const a = d.about;
+---
+
+<BaseLayout lang={lang} path="/about" title={a.title} description={a.lead}>
+  <PageHeader eyebrow={a.eyebrow} title={a.title} lead={a.lead} />
+
+  <section class="section border-hairline border-b">
+    <div class="shell grid gap-12 md:grid-cols-12 md:gap-16">
+      <div class="md:col-span-7">
+        {
+          a.body.map((paragraph) => (
+            <p class="text-ink mt-0 mb-7 leading-loose last:mb-0" data-reveal>
+              {paragraph}
+            </p>
+          ))
+        }
+      </div>
+      <div class="md:col-span-5">
+        <figure class="mx-auto max-w-xs md:sticky md:top-28" data-reveal>
+          <Frame
+            slug="craft-hands"
+            alt={editorialAlt('craft-hands', lang)}
+            ratio={ratioFor('craft-hands')}
+            sizes="(min-width: 768px) 320px, 80vw"
+          />
+          <figcaption class="text-muted-fg mt-3 text-xs leading-relaxed">
+            {a.captionCraft}
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="values">
+    <div class="shell">
+      <p class="t-eyebrow" data-reveal>{a.valuesEyebrow}</p>
+      <h2 id="values" class="t-h2 text-ink mt-4 max-w-2xl" data-reveal>{a.valuesHeading}</h2>
+
+      <dl class="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2" data-stagger>
+        {
+          a.values.map((value, index) => (
+            <div class="border-hairline border-t pt-6" data-reveal>
+              <dt class="flex items-baseline gap-4">
+                <span class="text-gold text-xs">{num(index + 1, lang)}</span>
+                <span class="display text-ink text-xl md:text-2xl">{value.title}</span>
+              </dt>
+              <dd class="text-muted-fg mt-3 ps-8 text-sm leading-relaxed">{value.body}</dd>
+            </div>
+          ))
+        }
+      </dl>
+
+      <div class="mt-16 flex flex-wrap gap-3" data-reveal>
+        <a class="btn btn-primary" href={href('/collections', lang)}>
+          {d.home.ctaPrimary}
+          <Icon name="arrow-right" size={16} class="rtl:rotate-180" />
+        </a>
+        <a class="btn btn-ghost" href={href('/contact', lang)}>{d.home.ctaSecondary}</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

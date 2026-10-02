@@ -1,0 +1,153 @@
+---
+/**
+ * A photograph in a fixed-ratio frame.
+ *
+ * Three decisions here were forced by what the supplied photographs actually
+ * are, and all three were measured rather than guessed. The measurements live in
+ * scripts/measure-image-ground.py and src/data/grounds.ts.
+ *
+ * 1. `object-fit: contain`, not cover. Six of the twelve product shots — the
+ *    chains, the collar, the cuff, the paired hoops — are wider than any frame
+ *    the grid can use, and a centred crop cuts metal off them. No single ratio
+ *    crops all twelve cleanly, so nothing is cropped at all.
+ *
+ * 2. The frame paints the gradient measured from that image's own top and bottom
+ *    edges rather than one shared --color-muted. The set came back on warm beige
+ *    grounds that drift from #D4CBC2 to #F4F0EB, so a shared colour would show a
+ *    step at every image edge. Matching per image makes the letterbox bands read
+ *    as a continuation of the photograph.
+ *
+ * 3. The <picture> markup is assembled from getImage() calls instead of using
+ *    <Picture>. Two reasons, both measured against the built output:
+ *      - <Picture> keeps the source format for its <img> fallback, and these
+ *        sources are PNG. That produced fallbacks up to 3.5 MB — larger than the
+ *        originals. None of these images has transparency, so JPEG is correct.
+ *      - Passing a glob-resolved ImageMetadata to <Picture> also made Vite emit
+ *        all 22 untouched originals into the build: 40.7 MB referenced by no
+ *        page. getImage() does not, which is why og-share was the one image
+ *        never duplicated.
+ *
+ * Falls back to the line-art motif when a slug has no photograph, so a missing
+ * file leaves one calm frame rather than breaking the build.
+ */
+import { getImage } from 'astro:assets';
+import Motif from './Motif.astro';
+import { photo } from '../lib/images';
+import { groundFor } from '../data/grounds';
+import type { Motif as MotifName, Tone } from '../data/catalog';
+
+interface Props {
+  /** Image filename without extension; matches the product/collection/post slug. */
+  slug: string;
+  /**
+   * Alternative text. Pass '' when an ancestor link or figure already names the
+   * image — a card that repeats its own heading is noise in a screen reader.
+   */
+  alt: string;
+  /** CSS aspect-ratio for the frame. Defaults to the set's commonest shape. */
+  ratio?: string;
+  widths?: number[];
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+  /** The hero wants fetchpriority=high; everything else should leave this alone. */
+  priority?: boolean;
+  motif?: MotifName;
+  tone?: Tone;
+  class?: string;
+}
+
+const {
+  slug,
+  alt,
+  ratio = '5 / 4',
+  widths = [320, 480, 640, 960, 1280],
+  sizes = '(min-width: 1024px) 320px, (min-width: 640px) 45vw, 92vw',
+  loading = 'lazy',
+  priority = false,
+  motif = 'ring',
+  tone = 'stone',
+  class: className = '',
+} = Astro.props;
+
+const QUALITY = 78;
+const image = photo(slug);
+
+/* Never upscale: a 1280w variant of a 1024w source ships bytes that carry no
+   extra detail. If every requested width is above the source, emit the source
+   width alone rather than nothing. */
+const inRange = image ? widths.filter((w) => w <= image.width) : [];
+const emitted = image ? (inRange.length ? inRange : [image.width]) : [];
+
+async function srcsetFor(format: 'avif' | 'webp' | 'jpeg') {
+  const built = await Promise.all(
+    emitted.map((width) => getImage({ src: image!, width, format, quality: QUALITY })),
+  );
+  return built.map((variant, i) => `${variant.src} ${emitted[i]}w`).join(', ');
+}
+
+const modern = image
+  ? await Promise.all(
+      (['avif', 'webp'] as const).map(async (format) => ({
+        type: `image/${format}`,
+        srcset: await srcsetFor(format),
+      })),
+    )
+  : [];
+
+const fallbackSrcset = image ? await srcsetFor('jpeg') : '';
+const widest = emitted.at(-1) ?? 0;
+const fallback = image
+  ? await getImage({ src: image, width: widest, format: 'jpeg', quality: QUALITY })
+  : undefined;
+const fallbackHeight = image ? Math.round((widest * image.height) / image.width) : 0;
+---
+
+<div
+  class={`frame ${className}`}
+  style={`aspect-ratio: ${ratio}; background: ${groundFor(slug)};`}
+>
+  {
+    image && fallback ? (
+      <picture>
+        {modern.map((source) => <source type={source.type} srcset={source.srcset} sizes={sizes} />)}
+        <img
+          src={fallback.src}
+          srcset={fallbackSrcset}
+          sizes={sizes}
+          alt={alt}
+          width={widest}
+          height={fallbackHeight}
+          loading={loading}
+          decoding={priority ? 'sync' : 'async'}
+          fetchpriority={priority ? 'high' : 'auto'}
+        />
+      </picture>
+    ) : (
+      <Motif motif={motif} tone={tone} />
+    )
+  }
+</div>
+
+<style>
+  .frame {
+    overflow: hidden;
+    /* The ground gradient is also the placeholder while the image decodes, so
+       nothing may paint over it. */
+    background-repeat: no-repeat;
+  }
+
+  /* <picture> is inline by default, which would leave a descender gap under the
+     frame and break the hover transform's bounding box. */
+  .frame > :global(picture),
+  .frame > :global(svg) {
+    display: block;
+    height: 100%;
+    width: 100%;
+  }
+
+  .frame :global(img) {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+  }
+</style>

@@ -1,0 +1,166 @@
+---
+import { site, type Lang } from '../data/site';
+import { t } from '../i18n/ui';
+import { href, otherLang } from '../lib/i18n';
+import Icon from './Icon.astro';
+
+interface Props {
+  lang: Lang;
+  path: string;
+}
+
+const { lang, path } = Astro.props;
+const d = t(lang);
+const other = otherLang(lang);
+
+/* Four primary destinations only. Care and FAQ are reachable from the footer
+   and from the pages that actually need them — an eight-item bar is noise. */
+const nav = [
+  { to: '/collections', label: d.nav.collections },
+  { to: '/about', label: d.nav.about },
+  { to: '/journal', label: d.nav.journal },
+  { to: '/contact', label: d.nav.contact },
+];
+
+const isCurrent = (to: string) => path === to || (to !== '/' && path.startsWith(`${to}/`));
+---
+
+<header class="sticky top-0 z-50 border-b border-hairline bg-bg/92 backdrop-blur-sm">
+  <div class="shell flex h-18 items-center justify-between gap-6 md:h-20">
+    <a
+      href={href('/', lang)}
+      class="display text-ink shrink-0 text-2xl md:text-[1.75rem]"
+      style={lang === 'fa' ? '' : 'letter-spacing:0.14em'}
+      aria-label={`${site.brand[lang]} — ${site.brandLine[lang]}`}
+    >
+      {site.brand[lang]}
+    </a>
+
+    <!-- Desktop navigation -->
+    <nav class="hidden md:block" aria-label={d.common.menu}>
+      <ul class="flex items-center gap-8">
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                href={href(item.to, lang)}
+                aria-current={isCurrent(item.to) ? 'page' : undefined}
+                class="t-eyebrow hover:text-ink aria-[current=page]:text-ink aria-[current=page]:underline underline-offset-8 decoration-gold decoration-1 transition-colors duration-200"
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <a
+        href={href(path, other)}
+        hreflang={other}
+        lang={other}
+        aria-label={d.common.langSwitch}
+        class="btn btn-quiet h-11 min-h-11 gap-2 px-4 py-0 text-xs"
+      >
+        <Icon name="globe" size={16} />
+        <span>{d.otherLocaleName}</span>
+      </a>
+
+      <!-- Mobile trigger: 44x44 minimum, labelled, reports its state -->
+      <button
+        type="button"
+        id="nav-toggle"
+        class="text-ink flex size-11 items-center justify-center md:hidden"
+        aria-expanded="false"
+        aria-controls="nav-panel"
+        aria-label={d.common.openMenu}
+        data-open-label={d.common.openMenu}
+        data-close-label={d.common.closeMenu}
+      >
+        <Icon name="menu" size={24} class="js-open" />
+        <Icon name="close" size={24} class="js-close hidden" />
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile panel -->
+  <nav
+    id="nav-panel"
+    class="border-hairline hidden border-t md:hidden"
+    aria-label={d.common.menu}
+    data-nav-panel
+  >
+    <ul class="shell flex flex-col py-2">
+      {
+        [...nav, { to: '/care', label: d.nav.care }, { to: '/faq', label: d.nav.faq }].map((item) => (
+          <li class="border-hairline border-b last:border-0">
+            <a
+              href={href(item.to, lang)}
+              aria-current={isCurrent(item.to) ? 'page' : undefined}
+              class="text-ink flex min-h-14 items-center text-base aria-[current=page]:text-gold"
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
+
+<script>
+  let escapeBound = false;
+
+  function setupNav() {
+    const toggle = document.getElementById('nav-toggle');
+    const panel = document.getElementById('nav-panel');
+    if (!toggle || !panel) return;
+
+    // setupNav runs both directly and on astro:page-load, because a deferred
+    // module can land either side of that event. Without this guard the second
+    // run adds a second click listener and every tap opens then closes the panel.
+    if (toggle.dataset.bound === 'true') return;
+    toggle.dataset.bound = 'true';
+
+    const openIcon = toggle.querySelector('.js-open');
+    const closeIcon = toggle.querySelector('.js-close');
+    const openLabel = toggle.getAttribute('aria-label') ?? 'Menu';
+    const closeLabel = toggle.dataset.closeLabel ?? openLabel;
+
+    const setState = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      panel.classList.toggle('hidden', !open);
+      openIcon?.classList.toggle('hidden', open);
+      closeIcon?.classList.toggle('hidden', !open);
+      toggle.setAttribute('aria-label', open ? closeLabel : openLabel);
+    };
+
+    toggle.addEventListener('click', () => {
+      setState(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    // Escape closes and returns focus to the trigger — expected keyboard behaviour.
+    // Bound to the document once for the session, not once per navigation, and it
+    // re-reads the current toggle each time so it survives a page swap.
+    if (!escapeBound) {
+      escapeBound = true;
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        const current = document.getElementById('nav-toggle');
+        const currentPanel = document.getElementById('nav-panel');
+        if (!current || !currentPanel) return;
+        if (current.getAttribute('aria-expanded') !== 'true') return;
+        current.setAttribute('aria-expanded', 'false');
+        currentPanel.classList.add('hidden');
+        current.querySelector('.js-open')?.classList.remove('hidden');
+        current.querySelector('.js-close')?.classList.add('hidden');
+        current.setAttribute('aria-label', current.dataset.openLabel ?? '');
+        (current as HTMLButtonElement).focus();
+      });
+    }
+  }
+
+  setupNav();
+  document.addEventListener('astro:page-load', setupNav);
+</script>

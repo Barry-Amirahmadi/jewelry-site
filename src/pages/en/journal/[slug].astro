@@ -1,0 +1,15 @@
+---
+import JournalPost from '../../../views/JournalPost.astro';
+import { posts } from '../../../data/catalog';
+
+export function getStaticPaths() {
+  return posts.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { post: entry },
+  }));
+}
+
+const { post } = Astro.props;
+---
+
+<JournalPost lang="en" post={post} />

@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import PieceCard from '../components/PieceCard.astro';
+import Frame from '../components/Frame.astro';
+import { collections, productsIn, type Collection } from '../data/catalog';
+import { collectionAlt } from '../data/alt';
+import type { Lang } from '../data/site';
+import { t } from '../i18n/ui';
+import { href } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+  collection: Collection;
+}
+
+const { lang, collection } = Astro.props;
+const d = t(lang);
+const pieces = productsIn(collection.slug);
+const others = collections.filter((item) => item.slug !== collection.slug);
+const path = `/collections/${collection.slug}`;
+---
+
+<BaseLayout
+  lang={lang}
+  path={path}
+  title={collection.name[lang]}
+  description={collection.intro[lang]}
+>
+  <header class="border-hairline border-b">
+    <div class="shell pt-10 pb-14 md:pb-20">
+      <!-- Back link before the heading: predictable, and always one level up -->
+      <a
+        href={href('/collections', lang)}
+        class="text-muted-fg hover:text-ink inline-flex min-h-11 items-center gap-2 text-xs transition-colors duration-200"
+      >
+        <Icon name="arrow-right" size={14} class="rotate-180 rtl:rotate-0" />
+        {d.common.backToCollections}
+      </a>
+
+      <p class="t-eyebrow mt-6" data-reveal>{d.collections.eyebrow}</p>
+      <h1 class="t-h1 text-ink mt-4" data-reveal>{collection.name[lang]}</h1>
+      <p class="t-lead text-gold mt-4" data-reveal>{collection.tagline[lang]}</p>
+      <p class="t-lead text-muted-fg mt-6 max-w-2xl" data-reveal>{collection.intro[lang]}</p>
+
+      <!-- Above the fold, so this one loads eagerly like the home hero. -->
+      <div class="mt-12" data-reveal>
+        <Frame
+          slug={collection.slug}
+          alt={collectionAlt(collection, lang)}
+          ratio="3 / 2"
+          loading="eager"
+          widths={[640, 960, 1280, 1536]}
+          sizes="(min-width: 1280px) 1200px, 94vw"
+        />
+      </div>
+    </div>
+  </header>
+
+  <section class="section border-hairline border-b" aria-labelledby="pieces">
+    <div class="shell">
+      <div class="flex items-baseline justify-between gap-6">
+        <h2 id="pieces" class="t-h2 text-ink" data-reveal>{d.collections.inThisCollection}</h2>
+        <p class="t-eyebrow shrink-0">{d.common.piecesCount(pieces.length)}</p>
+      </div>
+
+      <ul class="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3" data-stagger>
+        {pieces.map((product) => <li><PieceCard product={product} lang={lang} /></li>)}
+      </ul>
+
+      <p class="text-muted-fg mt-12 max-w-xl text-sm">{d.common.priceNote}</p>
+    </div>
+  </section>
+
+  <section class="section-tight" aria-labelledby="others">
+    <div class="shell">
+      <h2 id="others" class="t-eyebrow" data-reveal>{d.collections.otherCollections}</h2>
+      <ul class="mt-6 flex flex-wrap gap-3" data-reveal>
+        {
+          others.map((item) => (
+            <li>
+              <a class="btn btn-quiet" href={href(`/collections/${item.slug}`, lang)}>
+                {item.name[lang]}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

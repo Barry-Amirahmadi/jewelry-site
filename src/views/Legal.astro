@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import type { Lang } from '../data/site';
+import { t } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  kind: 'privacy' | 'terms';
+}
+
+const { lang, kind } = Astro.props;
+const d = t(lang);
+const l = d.legal;
+
+const copy =
+  kind === 'privacy'
+    ? { title: l.privacyTitle, lead: l.privacyLead, body: l.privacyBody, path: '/privacy' }
+    : { title: l.termsTitle, lead: l.termsLead, body: l.termsBody, path: '/terms' };
+---
+
+<BaseLayout lang={lang} path={copy.path} title={copy.title} description={copy.lead}>
+  <PageHeader eyebrow={d.footer.helpHeading} title={copy.title} lead={copy.lead} />
+
+  <section class="section">
+    <div class="shell max-w-2xl">
+      {
+        copy.body.map((paragraph) => (
+          <p class="text-ink mb-7 leading-loose last:mb-0" data-reveal>
+            {paragraph}
+          </p>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

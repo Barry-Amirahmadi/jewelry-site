@@ -1,0 +1,67 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Lets a deploy be re-run from the Actions tab without an empty commit,
+  # which matters when a Pages setting changed but the code did not.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race to publish. `cancel-in-progress: false` because a
+# half-finished upload that gets cancelled can leave the live site broken —
+# better to queue behind the running one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 24 is what the project is developed on.
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      # The gate runs before the build, not after: a deploy that publishes a
+      # red build is worse than no deploy. 58 Astro files, ~2s.
+      - name: Typecheck
+        run: npm run check
+
+      # Builds 58 pages and processes the 23 photographs into 425 AVIF/WebP/JPEG
+      # variants, then prunes the originals Astro copies in unreferenced. Takes
+      # about two minutes, nearly all of it image encoding.
+      - name: Build
+        run: npm run build
+
+      # Belt and braces. actions/deploy-pages serves the artifact as-is and does
+      # not run Jekyll, but if this repo is ever switched to a branch-based Pages
+      # source, Jekyll would silently drop _astro/ — every stylesheet, script and
+      # photograph on the site — and the failure looks like a styling bug rather
+      # than a missing file.
+      - name: Disable Jekyll processing
+        run: touch dist/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

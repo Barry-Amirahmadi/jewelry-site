@@ -1,0 +1,301 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400..700&family=Vazirmatn:wght@100..900&display=swap');
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens — generated from design-system/jewelry-site/MASTER.md
+   Style: Exaggerated Minimalism (luxury editorial)
+   Dials: variance 3 / motion 6 / density 2
+   Every text colour pair below is contrast-measured; ratios are noted inline.
+   --------------------------------------------------------------------------- */
+@theme {
+  --color-bg:        #FAFAF9;  /* warm off-white page */
+  --color-fg:        #0C0A09;  /* body text        19.76:1 on card */
+  --color-ink:       #1C1917;  /* headings          16.74:1 on bg */
+  --color-ink-soft:  #44403C;  /* secondary text     9.84:1 on bg */
+  --color-gold:      #A16207;  /* single accent      4.71:1 on bg */
+  /* The same accent, undarkened, for use on --color-ink: #A16207 only reaches
+     3.55:1 there, so small gold text on the dark section uses this instead. */
+  --color-gold-on-dark: #CA8A04; /*                  5.95:1 on ink */
+  --color-card:      #FFFFFF;
+  --color-muted:     #F5F5F4;  /* warm stone-100 (replaces cool #E8ECF0) */
+  --color-muted-fg:  #57534E;  /* warm stone-600     7.30:1 on bg */
+  --color-hairline:  #D6D3D1;  /* DECORATIVE dividers only — 1.43:1, never a boundary */
+  --color-field:     #78716C;  /* control borders     4.59:1 — clears WCAG 1.4.11 (3:1) */
+  --color-danger:    #DC2626;  /*                     4.62:1 on bg */
+
+  --font-display: 'Cormorant', Georgia, 'Times New Roman', serif;
+  --font-body: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-display-fa: 'Markazi Text', 'Cormorant', serif;
+  --font-body-fa: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The active font pair follows the document language: one stylesheet, two scripts. */
+:root,
+:root:lang(en) {
+  --font-display-active: var(--font-display);
+  --font-body-active: var(--font-body);
+  --display-weight: 400;
+  --display-tracking: -0.02em;
+  --display-leading: 0.95;
+}
+
+:root:lang(fa) {
+  --font-display-active: var(--font-display-fa);
+  --font-body-active: var(--font-body-fa);
+  --display-weight: 500;
+  --display-tracking: 0;     /* Arabic script must never be letter-spaced — it breaks joining */
+  --display-leading: 1.15;   /* Persian needs more leading than Latin at display sizes */
+}
+
+@layer base {
+  * {
+    min-width: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-body-active);
+    font-size: 1rem;      /* 16px floor — never below */
+    line-height: 1.6;
+    overflow-x: clip;     /* belt and braces against horizontal scroll */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .display {
+    font-family: var(--font-display-active);
+    font-weight: var(--display-weight);
+    letter-spacing: var(--display-tracking);
+    line-height: var(--display-leading);
+    text-wrap: balance;   /* kills orphan words in headings */
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Visible focus on every interactive element — never removed. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--color-gold);
+    color: #fff;
+  }
+
+  img,
+  svg,
+  video {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@layer components {
+  /* Exaggerated Minimalism type scale, adapted for Cormorant/Markazi (neither has 900) */
+  .t-display { font-size: clamp(2.75rem, 9vw, 9rem); }
+  .t-h1 { font-size: clamp(2.25rem, 5vw, 4rem); }
+  .t-h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); }
+  .t-h3 { font-size: clamp(1.25rem, 2vw, 1.625rem); }
+  .t-lead { font-size: clamp(1.0625rem, 1.4vw, 1.25rem); line-height: 1.7; }
+
+  .t-eyebrow {
+    font-family: var(--font-body-active);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--color-muted-fg);
+  }
+
+  /* Arabic script: no uppercasing, no tracking — both are meaningless or harmful here */
+  :root:lang(fa) .t-eyebrow {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.8125rem;
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .shell { padding-inline: 2.5rem; }
+  }
+
+  /* Section rhythm — density 2/10 (spacious) */
+  .section { padding-block: clamp(4rem, 10vw, 9rem); }
+  .section-tight { padding-block: clamp(3rem, 6vw, 5rem); }
+
+  /* Buttons — 2px radius, 44px minimum touch target */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.75rem 1.75rem;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    font-family: var(--font-body-active);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      background-color 220ms var(--ease-editorial),
+      color 220ms var(--ease-editorial),
+      border-color 220ms var(--ease-editorial);
+  }
+
+  :root:lang(fa) .btn {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.9375rem;
+  }
+
+  .btn-primary { background: var(--color-gold); color: #fff; }
+  .btn-primary:hover { background: #8A5406; }
+  .btn-ghost { background: transparent; color: var(--color-ink); border-color: var(--color-ink); }
+  .btn-ghost:hover { background: var(--color-ink); color: #fff; }
+  .btn-quiet { background: transparent; color: var(--color-ink); border-color: var(--color-field); }
+  .btn-quiet:hover { border-color: var(--color-ink); }
+
+  /* Inputs — the border is the only boundary, so it uses --color-field (>=3:1) */
+  .field {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    background: var(--color-card);
+    border: 1px solid var(--color-field);
+    border-radius: 2px;
+    font-family: var(--font-body-active);
+    font-size: 1rem;
+    color: var(--color-fg);
+    transition: border-color 200ms var(--ease-editorial);
+  }
+
+  .field:focus {
+    border-color: var(--color-ink);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(28 25 23 / 0.12);
+  }
+
+  .field[aria-invalid='true'] { border-color: var(--color-danger); }
+
+  .label {
+    display: block;
+    margin-block-end: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .hint {
+    margin-block-start: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--color-muted-fg);
+  }
+
+  .err {
+    margin-block-start: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-danger);
+  }
+
+  .hairline {
+    border: 0;
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  /* Editorial card — sharp corners, no drop shadow; hover moves the image inside
+     its frame, not the box, so nothing in the grid shifts.
+
+     The frame's ratio and ground colour are not set here: Frame.astro applies
+     them per photograph from the measurements in src/data/grounds.ts, because the
+     supplied set arrived on grounds that drift image to image. */
+  .piece { display: block; }
+
+  .piece .frame > * {
+    transition: transform 600ms var(--ease-editorial);
+  }
+
+  .piece:hover .frame > * { transform: scale(1.04); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .piece .frame > * { transition: none; }
+    .piece:hover .frame > * { transform: none; }
+  }
+
+  .link-underline {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--color-hairline);
+    text-underline-offset: 0.25em;
+    transition: text-decoration-color 200ms var(--ease-editorial);
+  }
+
+  .link-underline:hover { text-decoration-color: var(--color-gold); }
+
+  .skip-link {
+    position: absolute;
+    inset-inline-start: 1rem;
+    inset-block-start: -100%;
+    z-index: 100;
+    padding: 0.75rem 1.25rem;
+    background: var(--color-ink);
+    color: #fff;
+    border-radius: 2px;
+  }
+
+  .skip-link:focus { inset-block-start: 1rem; }
+}
+
+@layer utilities {
+  /* Reveal animations are opt-in via data-reveal and fully disabled on request.
+     The hidden start state is gated on .motion-ready, which src/scripts/motion.ts
+     adds once it has loaded. Without that gate, any JS failure would leave the
+     page permanently blank instead of merely unanimated. */
+  .motion-ready [data-reveal] { opacity: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .motion-ready [data-reveal] {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

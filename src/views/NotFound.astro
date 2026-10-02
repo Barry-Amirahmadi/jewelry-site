@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Motif from '../components/Motif.astro';
+import type { Lang } from '../data/site';
+import { t } from '../i18n/ui';
+import { href } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+const n = d.notFound;
+---
+
+<BaseLayout lang={lang} path="/404" title={n.title} description={n.body}>
+  <section class="section">
+    <div class="shell grid items-center gap-12 md:grid-cols-12">
+      <div class="md:col-span-7" data-hero>
+        <p class="t-eyebrow" data-reveal>{n.code}</p>
+        <h1 class="t-h1 text-ink mt-5 max-w-xl" data-reveal>{n.title}</h1>
+        <p class="t-lead text-muted-fg mt-6 max-w-xl" data-reveal>{n.body}</p>
+        <div class="mt-10 flex flex-wrap gap-3" data-reveal>
+          <a class="btn btn-primary" href={href('/collections', lang)}>
+            {n.cta}
+            <Icon name="arrow-right" size={16} class="rtl:rotate-180" />
+          </a>
+          <a class="btn btn-ghost" href={href('/', lang)}>{n.ctaHome}</a>
+        </div>
+      </div>
+      <div class="md:col-span-5">
+        <div class="mx-auto max-w-xs" data-reveal>
+          <Motif motif="earring" tone="ash" />
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

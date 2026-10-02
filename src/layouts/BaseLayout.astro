@@ -1,0 +1,107 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { getImage } from 'astro:assets';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { site, type Lang } from '../data/site';
+import { t } from '../i18n/ui';
+import { dirOf, alternates, href, asset } from '../lib/i18n';
+import { photo } from '../lib/images';
+import { editorialAlt, productAlt, postAlt } from '../data/alt';
+import { getProduct, getPost } from '../data/catalog';
+
+interface Props {
+  lang: Lang;
+  /** Logical path without the locale prefix, e.g. '/collections'. */
+  path: string;
+  title: string;
+  description: string;
+  /**
+   * Slug of the photograph to use on the share card. A product or post page
+   * passes its own, so a shared link shows the piece rather than the generic
+   * brand image.
+   */
+  share?: string;
+}
+
+const { lang, path, title, description, share = 'og-share' } = Astro.props;
+const d = t(lang);
+const dir = dirOf(lang);
+const brand = site.brand[lang];
+const fullTitle = `${title} — ${brand}`;
+const siteUrl = Astro.site?.toString() ?? 'https://example.com';
+const langAlternates = alternates(path, siteUrl);
+
+/* Built from href() rather than Astro.url.pathname, so the canonical URL carries
+   the base path and the trailing slash by exactly the same rule as every link on
+   the page — one source of truth instead of two that can drift apart. */
+const canonical = new URL(href(path, lang), siteUrl).toString();
+
+/* Share cards are rendered as JPEG at a fixed 1200px: several scrapers still
+   refuse AVIF and WebP, and an og:image they cannot decode shows as no image at
+   all. The height follows the source so nothing is cropped or stretched. */
+const shareSource = photo(share) ?? photo('og-share');
+const shareImage = shareSource
+  ? await getImage({ src: shareSource, width: 1200, format: 'jpeg', quality: 82 })
+  : undefined;
+const shareUrl = shareImage ? new URL(shareImage.src, siteUrl).toString() : undefined;
+
+/* The share image's alt text, from whichever kind of thing it belongs to. */
+const shareProduct = getProduct(share);
+const sharePost = getPost(share);
+const shareAlt = shareProduct
+  ? productAlt(shareProduct, lang)
+  : sharePost
+    ? postAlt(sharePost, lang)
+    : editorialAlt('og-share', lang);
+---
+
+<!doctype html>
+<html lang={lang} dir={dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href={asset('/favicon.svg')} type="image/svg+xml" />
+    <link rel="canonical" href={canonical} />
+    {langAlternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.url} />)}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content={lang === 'fa' ? 'fa_IR' : 'en_US'} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={brand} />
+    {
+      shareUrl && shareImage && (
+        <>
+          <meta property="og:image" content={shareUrl} />
+          <meta property="og:image:width" content={String(shareImage.options.width)} />
+          <meta property="og:image:height" content={String(shareImage.options.height)} />
+          <meta property="og:image:alt" content={shareAlt} />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:image" content={shareUrl} />
+        </>
+      )
+    }
+    <meta name="theme-color" content="#FAFAF9" />
+
+    <ClientRouter />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">{d.common.skip}</a>
+    <Header lang={lang} path={path} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+
+    <script>
+      import { initMotion } from '../scripts/motion';
+      initMotion();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Icon from '../components/Icon.astro';
+import Frame from '../components/Frame.astro';
+import { postsByDate } from '../data/catalog';
+import type { Lang } from '../data/site';
+import { t } from '../i18n/ui';
+import { href, formatDate } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+const j = d.journal;
+const entries = postsByDate();
+---
+
+<BaseLayout lang={lang} path="/journal" title={j.title} description={j.lead}>
+  <PageHeader eyebrow={j.eyebrow} title={j.title} lead={j.lead} />
+
+  <section class="section">
+    <div class="shell max-w-3xl">
+      <ul data-stagger>
+        {
+          entries.map((post) => (
+            <li class="border-hairline border-b" data-reveal>
+              <a
+                href={href(`/journal/${post.slug}`, lang)}
+                class="piece group grid gap-6 py-10 first:pt-0 sm:grid-cols-5 sm:gap-8"
+              >
+                <!-- alt="" — the heading inside this same link already names the post. -->
+                <div class="sm:col-span-2">
+                  <Frame
+                    slug={post.slug}
+                    alt=""
+                    ratio="3 / 2"
+                    sizes="(min-width: 640px) 260px, 92vw"
+                  />
+                </div>
+
+                <div class="sm:col-span-3">
+                  <p class="text-muted-fg flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    <time datetime={post.date}>{formatDate(post.date, lang)}</time>
+                    <span aria-hidden="true" class="text-hairline">—</span>
+                    <span>{j.readingTime(post.minutes)}</span>
+                  </p>
+                  <h2 class="t-h3 text-ink group-hover:text-gold mt-3 transition-colors duration-200">
+                    {post.title[lang]}
+                  </h2>
+                  <p class="text-muted-fg mt-3 text-sm leading-relaxed">{post.excerpt[lang]}</p>
+                  <span class="text-gold mt-4 inline-flex items-center gap-2 text-xs">
+                    {d.common.readMore}
+                    <Icon
+                      name="arrow-right"
+                      size={14}
+                      class="transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+                    />
+                  </span>
+                </div>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

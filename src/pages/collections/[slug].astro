@@ -1,0 +1,15 @@
+---
+import CollectionDetail from '../../views/CollectionDetail.astro';
+import { collections } from '../../data/catalog';
+
+export function getStaticPaths() {
+  return collections.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { collection: entry },
+  }));
+}
+
+const { collection } = Astro.props;
+---
+
+<CollectionDetail lang="fa" collection={collection} />

@@ -1,0 +1,140 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Frame from '../components/Frame.astro';
+import PieceCard from '../components/PieceCard.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import { getCollection, related, type Product } from '../data/catalog';
+import { productAlt } from '../data/alt';
+import { ratioFor } from '../data/grounds';
+import type { Lang } from '../data/site';
+import { t, num } from '../i18n/ui';
+import { href } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+  product: Product;
+}
+
+const { lang, product } = Astro.props;
+const d = t(lang);
+const p = d.product;
+const collection = getCollection(product.collection)!;
+const siblings = related(product);
+const path = `/products/${product.slug}`;
+
+const specs = [
+  { label: p.karat, value: num(product.karat, lang) },
+  { label: p.weight, value: `${num(product.weightGrams, lang)} ${p.weightUnit}` },
+  ...(product.stones ? [{ label: p.stones, value: product.stones[lang] }] : []),
+  { label: p.collection, value: collection.name[lang] },
+  { label: p.sku, value: product.ref },
+];
+---
+
+<BaseLayout
+  lang={lang}
+  path={path}
+  title={product.name[lang]}
+  description={`${product.name[lang]} — ${product.material[lang]}. ${product.story[lang]}`}
+  share={product.slug}
+>
+  <div class="shell pt-10">
+    <a
+      href={href(`/collections/${collection.slug}`, lang)}
+      class="text-muted-fg hover:text-ink inline-flex min-h-11 items-center gap-2 text-xs transition-colors duration-200"
+    >
+      <Icon name="arrow-right" size={14} class="rotate-180 rtl:rotate-0" />
+      {p.backLabel} {collection.name[lang]}
+    </a>
+  </div>
+
+  <article>
+    <div class="shell grid gap-12 pt-6 pb-16 md:grid-cols-12 md:gap-16 md:pb-24">
+      <!-- Frame -->
+      <div class="md:col-span-6 lg:col-span-7">
+        <div data-reveal>
+          <Frame
+            slug={product.slug}
+            alt={productAlt(product, lang)}
+            ratio={ratioFor(product.slug)}
+            motif={product.motif}
+            tone={product.tone}
+            loading="eager"
+            widths={[480, 720, 960, 1280, 1536]}
+            sizes="(min-width: 1024px) 700px, (min-width: 768px) 50vw, 94vw"
+          />
+        </div>
+      </div>
+
+      <!-- Detail -->
+      <div class="md:col-span-6 lg:col-span-5">
+        <p class="t-eyebrow" data-reveal>{collection.name[lang]}</p>
+        <h1 class="t-h1 text-ink mt-4" data-reveal>{product.name[lang]}</h1>
+        <p class="t-lead text-muted-fg mt-4" data-reveal>{product.material[lang]}</p>
+
+        <p class="text-gold mt-8 text-sm" data-reveal>{d.common.priceOnRequest}</p>
+        <p class="text-muted-fg mt-2 text-xs" data-reveal>{d.common.priceNote}</p>
+
+        <div class="mt-9 flex flex-wrap gap-3" data-reveal>
+          <a class="btn btn-primary" href="#enquiry">
+            {d.common.enquire}
+            <Icon name="arrow-right" size={16} class="rtl:rotate-180" />
+          </a>
+          <a class="btn btn-ghost" href={href('/contact', lang)}>{d.home.ctaSecondary}</a>
+        </div>
+
+        <!-- Specification -->
+        <section class="mt-14" aria-labelledby="specs">
+          <h2 id="specs" class="t-eyebrow" data-reveal>{p.specsHeading}</h2>
+          <dl class="mt-5" data-reveal>
+            {
+              specs.map((spec) => (
+                <div class="border-hairline flex gap-6 border-b py-3.5 last:border-0">
+                  <dt class="text-muted-fg w-36 shrink-0 text-sm">{spec.label}</dt>
+                  <dd class="text-ink text-sm">{spec.value}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </section>
+
+        <section class="mt-12" aria-labelledby="story">
+          <h2 id="story" class="t-eyebrow" data-reveal>{p.storyHeading}</h2>
+          <p class="text-ink mt-4 leading-relaxed" data-reveal>{product.story[lang]}</p>
+        </section>
+
+        <aside class="border-gold mt-10 border-s-2 ps-5" data-reveal>
+          <p class="text-ink text-sm font-medium">{p.madeToOrder}</p>
+          <p class="text-muted-fg mt-1.5 text-sm leading-relaxed">{p.madeToOrderNote}</p>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Enquiry -->
+    <section class="section border-hairline border-t bg-white" aria-labelledby="enquiry-title">
+      <div class="shell grid gap-12 lg:grid-cols-12">
+        <div class="lg:col-span-4">
+          <h2 id="enquiry-title" class="t-h2 text-ink" data-reveal>{p.enquiryHeading}</h2>
+          <p class="text-muted-fg mt-5 leading-relaxed" data-reveal>{p.enquiryLead}</p>
+        </div>
+        <div class="lg:col-span-8" data-reveal>
+          <EnquiryForm lang={lang} piece={product.slug} id="enquiry" />
+        </div>
+      </div>
+    </section>
+
+    {
+      siblings.length > 0 && (
+        <section class="section" aria-labelledby="related">
+          <div class="shell">
+            <h2 id="related" class="t-h2 text-ink" data-reveal>{p.relatedHeading}</h2>
+            <ul class="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3" data-stagger>
+              {siblings.map((sibling) => <li><PieceCard product={sibling} lang={lang} /></li>)}
+            </ul>
+          </div>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>
